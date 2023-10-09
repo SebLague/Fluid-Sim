@@ -291,7 +291,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdfe3008efbf29745879ab1d40574478, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  shader: {fileID: 4800000, guid: bebe529033c51cb4f99d667ea48fa0c7, type: 3}
+  shader: {fileID: 4800000, guid: 638bb1bdb9b8e374e8a5cbcd595e3973, type: 3}
   scale: 0.05
   col: {r: 0.27803493, g: 0.49487686, b: 0.8301887, a: 1}
   colourMap:
@@ -350,11 +350,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   numParticlesPerAxis: 35
   centre: {x: 0, y: -0.47, z: 0}
+  size: 3.7
   initialVel:
     x: 0
     y: 0
     z: 0
-  size: 3.7
   jitterStrength: 0.035
   showSpawnBounds: 1
   debug_numParticles: 42875
