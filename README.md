@@ -1,7 +1,7 @@
 # Fluid-Sim
 
 Watch [the video](https://www.youtube.com/watch?v=X-iSQQgOd1A). <br>
-Project created with Unity 2021.3
+Project created with Unity 2022.3
 
 With thanks to the following papers:
 * https://matthias-research.github.io/pages/publications/sca03.pdf
