@@ -1,6 +1,6 @@
 # Fluid-Sim
 
-Watch [the video](https://www.youtube.com/watch?v=X-iSQQgOd1A). <br>
+Watch [the video](https://youtu.be/rSKMYc1CQHE?si=KNw_i1sN2_CWEmzA).
 Project created with Unity 2022.3
 
 With thanks to the following papers:
