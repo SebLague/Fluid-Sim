@@ -265,9 +265,8 @@ void CalculateViscosity (uint3 id : SV_DispatchThreadID)
 			float3 neighbourVelocity = Velocities[neighbourIndex];
 			viscosityForce += (neighbourVelocity - velocity) * SmoothingKernelPoly6(dst, smoothingRadius);
 		}
-
-		Velocities[id.x] += viscosityForce * viscosityStrength * deltaTime;
 	}
+	Velocities[id.x] += viscosityForce * viscosityStrength * deltaTime;
 }
 
 [numthreads(NumThreads, 1, 1)]
