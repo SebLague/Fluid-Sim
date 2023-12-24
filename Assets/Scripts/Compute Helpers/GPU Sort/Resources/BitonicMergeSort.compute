@@ -41,22 +41,32 @@ void Sort (uint3 id : SV_DispatchThreadID)
 	}
 }
 
-// Calculate offsets into the sorted buffer (used for spatial hashing).
-// For example if the sorted buffer looks like -> Sorted: {0001223333}
-// The resulting offsets would be -> Offsets: {0003446666}
-// This means that, if for instance we look up Sorted[8] (which has a value of 3), we could then look up 
-// Offsets[8] to get a value of 6, which is the index where the group of 3's begins in the Sorted buffer.
-// NOTE: offsets buffer must filled with values equal to (or greater than) its length
+// Calculate offsets into the sorted Entries buffer (used for spatial hashing).
+// For example, given an Entries buffer sorted by key like so: {2, 2, 2, 3, 6, 6, 9, 9, 9, 9}
+// The resulting Offsets calculated here should be:            {-, -, 0, 3, -, -, 4, -, -, 6}
+// (where '-' represents elements that won't be read/written)
+// 
+// Usage example:
+// Say we have a particular particle P, and we want to know which particles are in the same grid cell as it.
+// First we would calculate the Key of P based on its position. Let's say in this example that Key = 9.
+// Next we can look up Offsets[Key] to get: Offsets[9] = 6
+// This tells us that SortedEntries[6] is the first particle that's in the same cell as P.
+// We can then loop until we reach a particle with a different cell key in order to iterate over all the particles in the cell.
+// 
+// NOTE: offsets buffer must filled with values equal to (or greater than) its length to ensure that this works correctly
 RWStructuredBuffer<uint> Offsets;
 
 [numthreads(128, 1, 1)]
-void CalculateOffsets (uint3 id : SV_DispatchThreadID)
+void CalculateOffsets(uint3 id : SV_DispatchThreadID)
 {
-	if (id.x >= numEntries) { return;}
+	if (id.x >= numEntries) { return; }
+
 	uint i = id.x;
+	uint null = numEntries;
 
 	uint key = Entries[i].key;
-	uint keyPrev = i == 0 ? 9999999 : Entries[i-1].key;
+	uint keyPrev = i == 0 ? null : Entries[i - 1].key;
+
 	if (key != keyPrev)
 	{
 		Offsets[key] = i;
