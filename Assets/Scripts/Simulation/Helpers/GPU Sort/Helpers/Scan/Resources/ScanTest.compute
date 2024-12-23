@@ -1,0 +1,86 @@
+#pragma kernel BlockScan
+#pragma kernel BlockCombine
+// Parallel Prefix Sum (scan)
+// https://www.eecs.umich.edu/courses/eecs570/hw/parprefix.pdf
+
+static const uint GROUP_SIZE = 256;
+static const uint ITEMS_PER_GROUP = 2 * GROUP_SIZE; // 2 items processed per thread
+
+RWStructuredBuffer<uint> Elements;
+RWStructuredBuffer<uint> GroupSums;
+uint itemCount;
+
+groupshared uint Temp[ITEMS_PER_GROUP];
+
+[numthreads(GROUP_SIZE, 1, 1)]
+void BlockScan(uint threadGlobal : SV_DispatchThreadID, uint threadLocal : SV_GroupThreadID, uint group : SV_GroupID)
+{
+	uint localA = threadLocal * 2 + 0;
+	uint localB = threadLocal * 2 + 1;
+	uint globalA = threadGlobal * 2 + 0;
+	uint globalB = threadGlobal * 2 + 1;
+
+	bool hasA = globalA < itemCount;
+	bool hasB = globalB < itemCount;
+
+	// Store the current pair in shared memory (store 0 if out of bounds)
+	Temp[localA] = hasA ? Elements[globalA] : 0;
+	Temp[localB] = hasB ? Elements[globalB] : 0;
+
+	// Up sweep
+	uint offset = 1;
+	uint numActiveThreads;
+
+	for (numActiveThreads = GROUP_SIZE; numActiveThreads > 0; numActiveThreads /= 2)
+	{
+		GroupMemoryBarrierWithGroupSync();
+
+		if (threadLocal < numActiveThreads)
+		{
+			uint indexA = offset * (localA + 1) - 1;
+			uint indexB = offset * (localB + 1) - 1;
+			Temp[indexB] = Temp[indexA] + Temp[indexB];
+		}
+		offset *= 2;
+	}
+
+	// Thread 0 is the last active thread in the reductions, so it can safely do stuff without a sync
+	if (threadLocal == 0)
+	{
+		// Store total count in group sums, so that individual group scans can later be easily combined
+		GroupSums[group] = Temp[ITEMS_PER_GROUP - 1];
+		// Set the total count stored in temp to 0 as it is not used in an exlusive scan
+		Temp[ITEMS_PER_GROUP - 1] = 0;
+	}
+
+	// Down sweep
+	for (numActiveThreads = 1; numActiveThreads <= GROUP_SIZE; numActiveThreads *= 2)
+	{
+		GroupMemoryBarrierWithGroupSync();
+		offset /= 2;
+
+		if (threadLocal < numActiveThreads)
+		{
+			uint indexA = offset * (localA + 1) - 1;
+			uint indexB = offset * (localB + 1) - 1;
+			uint sum = Temp[indexA] + Temp[indexB];
+			Temp[indexA] = Temp[indexB];
+			Temp[indexB] = sum;
+		}
+	}
+
+	GroupMemoryBarrierWithGroupSync();
+
+	if (hasA) Elements[globalA] = Temp[localA];
+	if (hasB) Elements[globalB] = Temp[localB];
+}
+
+[numthreads(GROUP_SIZE, 1, 1)]
+void BlockCombine(uint threadGlobal : SV_DispatchThreadID, uint group : SV_GroupID)
+{
+	uint globalA = threadGlobal * 2 + 0;
+	uint globalB = threadGlobal * 2 + 1;
+
+	if (globalA < itemCount) Elements[globalA] += GroupSums[group];
+	if (globalB < itemCount) Elements[globalB] += GroupSums[group];
+}

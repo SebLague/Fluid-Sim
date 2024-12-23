@@ -1,0 +1,16 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel SetRenderArgs
+
+RWStructuredBuffer<uint> RenderArgs;
+
+[numthreads(1,1,1)]
+void SetRenderArgs(uint3 id : SV_DispatchThreadID)
+{
+    // Index count: output from marching cubes is triangle buffer, where each triangle entry contains 3 vertices.
+    // Therefore, the number of indices is 3x the number of elements (which at this stage has been copied into the render args)
+    RenderArgs[0] *= 3;
+    RenderArgs[1] = 1; // Instance count
+    RenderArgs[2] = 0; // Submesh index
+    RenderArgs[3] = 0; // Base vertex
+    RenderArgs[4] = 0; // Offset
+}

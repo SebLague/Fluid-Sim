@@ -1,0 +1,37 @@
+#pragma kernel InitializeOffsets
+#pragma kernel CalculateOffsets
+
+// Example: given the following SORTED key values: {2, 2, 2, 3, 6, 6, 9, 9, 9, 9}
+// The resulting Offsets calculated here would be: {x, x, 0, 3, x, x, 4, x, x, 6}
+// (where 'x' represents elements that won't be read/written)
+// So, if it's desired to know where the entry '6' first appears in the keys buffer, one could now
+// look up Offsets[6] to find the index of 4.
+// 
+// NOTE: offsets buffer must be initialized with values equal to (or greater than) its length to ensure that this works correctly
+StructuredBuffer<uint> SortedKeys;
+RWStructuredBuffer<uint> Offsets;
+uint numInputs;
+
+[numthreads(256, 1, 1)]
+void InitializeOffsets(uint3 id : SV_DispatchThreadID)
+{
+	if (id.x >= numInputs) { return; }
+	Offsets[id.x] = numInputs;
+}
+
+[numthreads(256, 1, 1)]
+void CalculateOffsets(uint3 id : SV_DispatchThreadID)
+{
+	if (id.x >= numInputs) { return; }
+
+	uint i = id.x;
+	uint null = numInputs;
+
+	uint key = SortedKeys[i];
+	uint keyPrev = i == 0 ? null : SortedKeys[i - 1];
+
+	if (key != keyPrev)
+	{
+		Offsets[key] = i;
+	}
+}
