@@ -3,10 +3,10 @@
 #pragma kernel ScatterOutput
 #pragma kernel CopyBack
 
+RWStructuredBuffer<uint> InputItems;
 RWStructuredBuffer<uint> InputKeys;
-RWStructuredBuffer<uint> InputValues;
+RWStructuredBuffer<uint> SortedItems;
 RWStructuredBuffer<uint> SortedKeys;
-RWStructuredBuffer<uint> SortedValues;
 
 RWStructuredBuffer<uint> Counts;
 uint numInputs;
@@ -36,13 +36,12 @@ void ScatterOutput(uint3 id : SV_DispatchThreadID)
 	if (id.x >= numInputs) return;
 
 	uint key = InputKeys[id.x];
-	uint value = InputValues[id.x];
 
 	uint sortedIndex;
 	InterlockedAdd(Counts[key], 1, sortedIndex);
 
+	SortedItems[sortedIndex] = InputItems[id.x];
 	SortedKeys[sortedIndex] = key;
-	SortedValues[sortedIndex] = value;
 }
 
 [numthreads(GroupSize, 1, 1)]
@@ -50,6 +49,6 @@ void CopyBack(uint3 id : SV_DispatchThreadID)
 {
 	if (id.x >= numInputs) return;
 
+	InputItems[id.x] = SortedItems[id.x];
 	InputKeys[id.x] = SortedKeys[id.x];
-	InputValues[id.x] = SortedValues[id.x];
 }

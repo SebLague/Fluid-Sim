@@ -3,6 +3,7 @@ using UnityEngine;
 using Seb.GPUSorting;
 using Unity.Mathematics;
 using System.Collections.Generic;
+using Seb.Helpers;
 using static Seb.Helpers.ComputeHelper;
 
 namespace Seb.Fluid.Simulation
@@ -75,10 +76,8 @@ namespace Seb.Fluid.Simulation
 		const int renderKernel = 8;
 		const int foamUpdateKernel = 9;
 		const int foamReorderCopyBackKernel = 10;
-		
-		// Sorting
-		GPUCountSort gpuSort;
-		SpatialOffsetCalculator spatialOffsetsCalc;
+
+		SpatialHash spatialHash;
 
 		// State
 		bool isPaused;
@@ -99,6 +98,7 @@ namespace Seb.Fluid.Simulation
 
 		void Initialize()
 		{
+			spatialHash = new SpatialHash();
 			spawnData = spawner.GetSpawnData();
 
 			// Create buffers
@@ -255,9 +255,6 @@ namespace Seb.Fluid.Simulation
 			compute.SetInt("numParticles", positionBuffer.count);
 			compute.SetInt("MaxWhiteParticleCount", maxFoamParticleCount);
 
-			gpuSort = new GPUCountSort(spatialKeys, sortedIndices, (uint)(spatialKeys.count - 1));
-			spatialOffsetsCalc = new SpatialOffsetCalculator(spatialKeys, spatialOffsets);
-
 			UpdateSmoothingConstants();
 
 			// Run single frame of sim with deltaTime = 0 to initialize density texture
@@ -333,8 +330,8 @@ namespace Seb.Fluid.Simulation
 			Dispatch(compute, positionBuffer.count, kernelIndex: externalForcesKernel);
 
 			Dispatch(compute, positionBuffer.count, kernelIndex: spatialHashKernel);
-			gpuSort.Run();
-			spatialOffsetsCalc.Run(false);
+			spatialHash.Run(sortedIndices, spatialKeys, spatialOffsets);
+			
 			Dispatch(compute, positionBuffer.count, kernelIndex: reorderKernel);
 			Dispatch(compute, positionBuffer.count, kernelIndex: reorderCopybackKernel);
 
@@ -449,7 +446,7 @@ namespace Seb.Fluid.Simulation
 				Release(kvp.Key);
 			}
 
-			gpuSort.Release();
+			spatialHash.Release();
 		}
 
 

@@ -1,12 +1,12 @@
 #pragma kernel InitializeOffsets
 #pragma kernel CalculateOffsets
 
-// Example: given the following SORTED key values: {2, 2, 2, 3, 6, 6, 9, 9, 9, 9}
-// The resulting Offsets calculated here would be: {x, x, 0, 3, x, x, 4, x, x, 6}
-// (where 'x' represents elements that won't be read/written)
-// So, if it's desired to know where the entry '6' first appears in the keys buffer, one could now
-// look up Offsets[6] to find the index of 4.
-// 
+// Calculate offsets for the given sorted keys. For example, given:
+// SortedKeys = {2, 2, 2, 3, 6, 6, 9, 9, 9, 9}
+// Output will be ('x' represents irrelevant entries):
+// Offsets = {x, x, 0, 3, x, x, 4, x, x, 6} 
+// Now, to look up where the '6' keys start for instance, Offsets[6] gives the answer (4)
+
 // NOTE: offsets buffer must be initialized with values equal to (or greater than) its length to ensure that this works correctly
 StructuredBuffer<uint> SortedKeys;
 RWStructuredBuffer<uint> Offsets;

@@ -19,7 +19,7 @@ namespace Seb.Helpers
 	{
 		public const FilterMode defaultFilterMode = FilterMode.Bilinear;
 		public const GraphicsFormat defaultGraphicsFormat = GraphicsFormat.R32G32B32A32_SFloat;
-		static uint[] argsBufferArray = new uint[5];
+		static readonly uint[] argsBufferArray = new uint[5];
 
 		public static void Dispatch(ComputeShader cs, Vector3Int numIterations, int kernelIndex = 0)
 		{
@@ -86,7 +86,7 @@ namespace Seb.Helpers
 			buffer.SetCounterValue(0);
 		}
 
-		public static void CreateStructuredBuffer<T>(ref ComputeBuffer buffer, int count)
+		public static bool CreateStructuredBuffer<T>(ref ComputeBuffer buffer, int count)
 		{
 			int stride = GetStride<T>();
 			bool createNewBuffer = buffer == null || !buffer.IsValid() || buffer.count != count || buffer.stride != stride;
@@ -94,7 +94,10 @@ namespace Seb.Helpers
 			{
 				Release(buffer);
 				buffer = new ComputeBuffer(count, stride);
+				return true;
 			}
+
+			return false;
 		}
 
 
@@ -475,6 +478,7 @@ namespace Seb.Helpers
 			return values;
 		}
 
+		// Load compute shader by name (must be placed in Resources folder)
 		public static void LoadComputeShader(ref ComputeShader shader, string name)
 		{
 			if (shader == null)
@@ -482,7 +486,8 @@ namespace Seb.Helpers
 				shader = LoadComputeShader(name);
 			}
 		}
-
+		
+		// Load compute shader by name (must be placed in Resources folder)
 		public static ComputeShader LoadComputeShader(string name)
 		{
 			return Resources.Load<ComputeShader>(name.Split('.')[0]);
