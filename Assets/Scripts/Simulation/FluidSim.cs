@@ -55,9 +55,6 @@ namespace Seb.Fluid.Simulation
 		public ComputeBuffer velocityBuffer { get; private set; }
 		public ComputeBuffer densityBuffer { get; private set; }
 		public ComputeBuffer predictedPositionsBuffer;
-		public ComputeBuffer spatialKeys { get; private set; }
-		public ComputeBuffer spatialOffsets { get; private set; }
-		public ComputeBuffer sortedIndices { get; private set; }
 		public ComputeBuffer debugBuffer { get; private set; }
 
 		ComputeBuffer sortTarget_positionBuffer;
@@ -98,18 +95,16 @@ namespace Seb.Fluid.Simulation
 
 		void Initialize()
 		{
-			spatialHash = new SpatialHash();
 			spawnData = spawner.GetSpawnData();
-
-			// Create buffers
 			int numParticles = spawnData.points.Length;
+
+			spatialHash = new SpatialHash(numParticles);
+			
+			// Create buffers
 			positionBuffer = CreateStructuredBuffer<float3>(numParticles);
 			predictedPositionsBuffer = CreateStructuredBuffer<float3>(numParticles);
 			velocityBuffer = CreateStructuredBuffer<float3>(numParticles);
 			densityBuffer = CreateStructuredBuffer<float2>(numParticles);
-			spatialKeys = CreateStructuredBuffer<uint>(numParticles);
-			spatialOffsets = CreateStructuredBuffer<uint>(numParticles);
-			sortedIndices = CreateStructuredBuffer<uint>(numParticles);
 			foamBuffer = CreateStructuredBuffer<FoamParticle>(maxFoamParticleCount);
 			foamSortTargetBuffer = CreateStructuredBuffer<FoamParticle>(maxFoamParticleCount);
 			foamCountBuffer = CreateStructuredBuffer<uint>(4096);
@@ -125,9 +120,9 @@ namespace Seb.Fluid.Simulation
 				{ predictedPositionsBuffer, "PredictedPositions" },
 				{ velocityBuffer, "Velocities" },
 				{ densityBuffer, "Densities" },
-				{ spatialKeys, "SpatialKeys" },
-				{ spatialOffsets, "SpatialOffsets" },
-				{ sortedIndices, "SortedIndices" },
+				{ spatialHash.SpatialKeys, "SpatialKeys" },
+				{ spatialHash.SpatialOffsets, "SpatialOffsets" },
+				{ spatialHash.SpatialIndices, "SortedIndices" },
 				{ sortTarget_positionBuffer, "SortTarget_Positions" },
 				{ sortTarget_predictedPositionsBuffer, "SortTarget_PredictedPositions" },
 				{ sortTarget_velocityBuffer, "SortTarget_Velocities" },
@@ -151,10 +146,10 @@ namespace Seb.Fluid.Simulation
 			// Spatial hash kernel
 			SetBuffers(compute, spatialHashKernel, bufferNameLookup, new ComputeBuffer[]
 			{
-				spatialKeys,
-				spatialOffsets,
+				spatialHash.SpatialKeys,
+				spatialHash.SpatialOffsets,
 				predictedPositionsBuffer,
-				sortedIndices
+				spatialHash.SpatialIndices
 			});
 
 			// Reorder kernel
@@ -166,7 +161,7 @@ namespace Seb.Fluid.Simulation
 				sortTarget_predictedPositionsBuffer,
 				velocityBuffer,
 				sortTarget_velocityBuffer,
-				sortedIndices
+				spatialHash.SpatialIndices
 			});
 
 			// Reorder copyback kernel
@@ -178,7 +173,7 @@ namespace Seb.Fluid.Simulation
 				sortTarget_predictedPositionsBuffer,
 				velocityBuffer,
 				sortTarget_velocityBuffer,
-				sortedIndices
+				spatialHash.SpatialIndices
 			});
 
 			// Density kernel
@@ -186,8 +181,8 @@ namespace Seb.Fluid.Simulation
 			{
 				predictedPositionsBuffer,
 				densityBuffer,
-				spatialKeys,
-				spatialOffsets
+				spatialHash.SpatialKeys,
+				spatialHash.SpatialOffsets
 			});
 
 			// Pressure kernel
@@ -196,8 +191,8 @@ namespace Seb.Fluid.Simulation
 				predictedPositionsBuffer,
 				densityBuffer,
 				velocityBuffer,
-				spatialKeys,
-				spatialOffsets,
+				spatialHash.SpatialKeys,
+				spatialHash.SpatialOffsets,
 				foamBuffer,
 				foamCountBuffer,
 				debugBuffer
@@ -209,8 +204,8 @@ namespace Seb.Fluid.Simulation
 				predictedPositionsBuffer,
 				densityBuffer,
 				velocityBuffer,
-				spatialKeys,
-				spatialOffsets
+				spatialHash.SpatialKeys,
+				spatialHash.SpatialOffsets
 			});
 
 			// Update positions kernel
@@ -225,8 +220,8 @@ namespace Seb.Fluid.Simulation
 			{
 				predictedPositionsBuffer,
 				densityBuffer,
-				spatialKeys,
-				spatialOffsets,
+				spatialHash.SpatialKeys,
+				spatialHash.SpatialOffsets,
 			});
 
 			// Foam update kernel
@@ -237,8 +232,8 @@ namespace Seb.Fluid.Simulation
 				predictedPositionsBuffer,
 				densityBuffer,
 				velocityBuffer,
-				spatialKeys,
-				spatialOffsets,
+				spatialHash.SpatialKeys,
+				spatialHash.SpatialOffsets,
 				foamSortTargetBuffer,
 				//debugBuffer
 			});
@@ -330,7 +325,7 @@ namespace Seb.Fluid.Simulation
 			Dispatch(compute, positionBuffer.count, kernelIndex: externalForcesKernel);
 
 			Dispatch(compute, positionBuffer.count, kernelIndex: spatialHashKernel);
-			spatialHash.Run(sortedIndices, spatialKeys, spatialOffsets);
+			spatialHash.Run();
 			
 			Dispatch(compute, positionBuffer.count, kernelIndex: reorderKernel);
 			Dispatch(compute, positionBuffer.count, kernelIndex: reorderCopybackKernel);
