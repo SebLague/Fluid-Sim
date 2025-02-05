@@ -22,7 +22,7 @@ RWStructuredBuffer<float2> Densities; // Density, Near Density
 // Spatial hashing
 RWStructuredBuffer<uint> SpatialKeys;
 RWStructuredBuffer<uint> SpatialOffsets;
-RWStructuredBuffer<uint> SortedIndices;
+StructuredBuffer<uint> SortedIndices;
 
 // Settings
 const uint numParticles;
@@ -202,11 +202,6 @@ void ExternalForces(uint3 id : SV_DispatchThreadID)
 void UpdateSpatialHash (uint3 id : SV_DispatchThreadID)
 {
 	if (id.x >= numParticles) return;
-
-	// Reset offsets
-	SpatialOffsets[id.x] = numParticles;
-	SortedIndices[id.x] = id.x;
-	
 	
 	uint index = id.x;
 	int2 cell = GetCell2D(PredictedPositions[index], smoothingRadius);

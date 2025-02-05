@@ -180,7 +180,7 @@ MonoBehaviour:
   viscosityStrength: 0.03
   boundsSize: {x: 17.1, y: 9.3}
   obstacleSize: {x: 2.75, y: 5}
-  obstacleCentre: {x: 4.8, y: -1}
+  obstacleCentre: {x: 0.03, y: -1}
   interactionRadius: 2.5
   interactionStrength: 75
   compute: {fileID: 7200000, guid: 1c77ce8de78fddb419ed2d15cae41af0, type: 3}
@@ -197,12 +197,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 895837b52d5fc53409ded3589d4da696, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  particleCount: 16000
+  spawnDensity: 500
   initialVelocity: {x: 0, y: 0}
-  spawnCentre: {x: -1.28, y: 0.58}
-  spawnSize: {x: 6.24, y: 7.72}
-  jitterStr: 0.02
+  jitterStr: 0.03
+  spawnRegions:
+  - position: {x: -5.25, y: 2.35}
+    size: {x: 4.71, y: 3.4}
+    debugCol: {r: 1, g: 0.2783019, b: 0.2783019, a: 1}
+  - position: {x: 5.53, y: 2.35}
+    size: {x: 4.71, y: 3.4}
+    debugCol: {r: 0.27843142, g: 0.8376986, b: 1, a: 1}
   showSpawnBoundsGizmos: 1
+  spawnParticleCount: 16324
 --- !u!114 &271053322
 MonoBehaviour:
   m_ObjectHideFlags: 0

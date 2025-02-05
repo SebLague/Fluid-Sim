@@ -19,6 +19,7 @@ void ClearCounts(uint3 id : SV_DispatchThreadID)
 	if (id.x >= numInputs) return;
 
 	Counts[id.x] = 0;
+	InputItems[id.x] = id.x;
 }
 
 [numthreads(GroupSize, 1, 1)]

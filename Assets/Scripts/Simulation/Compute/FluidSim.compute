@@ -23,9 +23,10 @@ RWStructuredBuffer<float3> PredictedPositions;
 RWStructuredBuffer<float3> Velocities;
 RWStructuredBuffer<float2> Densities; // Density, Near Density
 
-RWStructuredBuffer<uint> SpatialKeys; // used for spatial hashing
-RWStructuredBuffer<uint> SpatialOffsets; // used for spatial hashing
-RWStructuredBuffer<uint> SortedIndices;
+// Spatial hashing
+RWStructuredBuffer<uint> SpatialKeys;
+RWStructuredBuffer<uint> SpatialOffsets;
+StructuredBuffer<uint> SortedIndices;
 
 RWStructuredBuffer<float3> Debug;
 
@@ -154,8 +155,6 @@ void UpdateSpatialHash(uint3 id : SV_DispatchThreadID)
     uint key = KeyFromHash(hash, numParticles);
 
     SpatialKeys[id.x] = key;
-    SortedIndices[id.x] = id.x;
-    SpatialOffsets[id.x] = numParticles; // Reset offsets
 }
 
 
@@ -301,21 +300,18 @@ void CalculatePressureForce(uint3 id : SV_DispatchThreadID)
             currIndex++;
 
             // Skip if looking at self
-            if (neighbourIndex == id.x)
-                continue;
+            if (neighbourIndex == id.x) continue;
 
             uint neighbourKey = SpatialKeys[neighbourIndex];
             // Exit if no longer looking at correct bin
-            if (neighbourKey != key)
-                break;
+            if (neighbourKey != key) break;
 
             float3 neighbourPos = PredictedPositions[neighbourIndex];
             float3 offsetToNeighbour = neighbourPos - pos;
             float sqrDstToNeighbour = dot(offsetToNeighbour, offsetToNeighbour);
 
             // Skip if not within radius
-            if (sqrDstToNeighbour > sqrRadius)
-                continue;
+            if (sqrDstToNeighbour > sqrRadius) continue;
 
             // Calculate pressure force
             float densityNeighbour = Densities[neighbourIndex][0];
