@@ -9,7 +9,7 @@ Development videos: [Simulation](https://youtu.be/rSKMYc1CQHE?si=KNw_i1sN2_CWEmz
 With thanks to the following papers:
 * Simulation:
 * https://matthias-research.github.io/pages/publications/sca03.pdf
-* http://www.ligum.umontreal.ca/Clavet-2005-PVFS/pvfs.pdf
+* https://web.archive.org/web/20250106201614/http://www.ligum.umontreal.ca/Clavet-2005-PVFS/pvfs.pdf
 * https://sph-tutorial.physics-simulation.org/pdf/SPH_Tutorial.pdf
 * https://web.archive.org/web/20140725014123/https://docs.nvidia.com/cuda/samples/5_Simulations/particles/doc/particles.pdf
 * Rendering:
